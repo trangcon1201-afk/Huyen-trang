@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Bimbosan Megalive | AR</title>
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#d6effa;overflow:hidden}
+#status{position:fixed;z-index:30;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(16,35,45,.83);color:white;border-radius:16px;padding:11px 17px;text-align:center;font-size:14px;width:min(90vw,370px);pointer-events:none}
+#top{position:fixed;z-index:30;top:14px;left:50%;transform:translateX(-50%);background:#fffdf2;color:#9f1d20;border-radius:30px;padding:9px 18px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 12px #0002}
+#err{position:fixed;z-index:35;top:65px;left:10%;width:80%;color:#8a1111;background:#fff3ed;padding:12px;border-radius:12px;display:none;font-size:13px}
+</style>
+</head>
+<body>
+<div id="top">Bimbosan · Megalive AR</div>
+<div id="status">Cho phép dùng camera, rồi hướng vào ảnh nền nông trại trên thiệp</div>
+<div id="err"></div>
+<a-scene mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.01;" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true; alpha: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" loading-screen="enabled: false">
+  <a-assets timeout="25000">
+    <img id="frameAsset" src="./megalive_frame.png" crossorigin="anonymous">
+    <img id="tableAsset" src="./bimbosan_table.png" crossorigin="anonymous">
+  </a-assets>
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-entity id="target" mindar-image-target="targetIndex: 0">
+    <!-- target is portrait 1155x2048; MindAR image plane width=1 height=1.773 -->
+    <a-image id="frame" src="#frameAsset" width="1" height="1.773" position="0 0 0.025" material="transparent: true; alphaTest: 0.02; depthWrite: false; side: double" visible="false"></a-image>
+    <!-- Flat art mounted in front of the print, with a small Z offset for parallax. -->
+    <a-entity id="product" position="0 -0.16 0.14" scale="0.001 0.001 0.001" visible="false">
+      <a-image src="#tableAsset" width="0.81" height="0.944" material="transparent: true; alphaTest: 0.02; depthWrite: false; side: double" animation__float="property: position; from: 0 0 0; to: 0 0.026 0; dur: 1500; dir: alternate; loop: true; easing: easeInOutSine"></a-image>
+    </a-entity>
+  </a-entity>
+</a-scene>
+<script>
+const target=document.querySelector('#target'), frame=document.querySelector('#frame'), product=document.querySelector('#product'),status=document.querySelector('#status');
+let active=false;
+function clearAnimations(){product.removeAttribute('animation__appear');frame.removeAttribute('animation__appear');}
+target.addEventListener('targetFound',()=>{
+  if(active)return;active=true;clearAnimations();
+  frame.setAttribute('visible',true);product.setAttribute('visible',true);
+  frame.setAttribute('scale','0.88 0.88 0.88');product.setAttribute('scale','0.001 0.001 0.001');
+  frame.setAttribute('animation__appear','property: scale; to: 1 1 1; dur: 650; easing: easeOutBack');
+  product.setAttribute('animation__appear','property: scale; to: 1 1 1; dur: 1100; delay: 450; easing: easeOutElastic');
+  status.textContent='Đã nhận diện thiệp! Hãy nghiêng điện thoại để xem các lớp nổi.';
+});
+target.addEventListener('targetLost',()=>{active=false;frame.setAttribute('visible',false);product.setAttribute('visible',false);status.textContent='Đưa camera hướng lại vào mặt thiệp nông trại';});
+window.addEventListener('error',(e)=>{const el=document.querySelector('#err');el.style.display='block';el.textContent='Lỗi: '+e.message;});
+</script>
+</body></html>
